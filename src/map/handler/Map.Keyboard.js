@@ -22,6 +22,7 @@ L.Map.Keyboard = L.Handler.extend({
 	initialize: function (map) {
 		this._map = map;
 
+        this._keyState = {};
 		this._setPanOffset(map.options.keyboardPanOffset);
 		this._setZoomOffset(map.options.keyboardZoomOffset);
 	},
@@ -60,6 +61,26 @@ L.Map.Keyboard = L.Handler.extend({
 			blur: this._removeHooks
 		}, this);
 	},
+
+    loop: function() {
+        console.log('loop');
+        var map = this._map;
+        var offset;
+        if (keyState[37]) {
+            offset = this._panKeys[37];
+        }
+        if (keyState[38]) {
+            offset = this._panKeys[38];
+        }
+        if (keyState[39]) {
+            offset = this._panKeys[39];
+        }
+        if (keyState[40]) {
+            offset = this._panKeys[40];
+        }
+        map.panBy(offset);
+        setTimeout(this.loop, 10);
+    },
 
 	_onMouseDown: function () {
 		if (this._focused) { return; }
@@ -117,15 +138,19 @@ L.Map.Keyboard = L.Handler.extend({
 	},
 
 	_addHooks: function () {
-		L.DomEvent.on(document, 'keydown', this._onKeyDown, this);
+        L.DomEvent.on(document, 'keydown', this._onKeyDown, this);
+        L.DomEvent.on(document, 'keyup', this._onKeyUp, this);
 	},
 
 	_removeHooks: function () {
 		L.DomEvent.off(document, 'keydown', this._onKeyDown, this);
+        L.DomEvent.off(document, 'keyup', this._onKeyUp, this);
 	},
 
 	_onKeyDown: function (e) {
 		if (e.altKey || e.ctrlKey || e.metaKey) { return; }
+        this._keyState[e.keyCode || e.which] = true;
+        return;
 
 		var key = e.keyCode,
 		    map = this._map,
@@ -157,7 +182,12 @@ L.Map.Keyboard = L.Handler.extend({
 		}
 
 		L.DomEvent.stop(e);
-	}
+	},
+    _onKeyUp: function (e) {
+		if (e.altKey || e.ctrlKey || e.metaKey) { return; }
+
+        this._keyState[e.keyCode || e.which] = false;
+    }
 });
 
 L.Map.addInitHook('addHandler', 'keyboard', L.Map.Keyboard);
